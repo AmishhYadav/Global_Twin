@@ -17,12 +17,12 @@ Accurately model interconnected global systems to predict the ripple effects of 
 - [x] Ingest real-world historical data via static CSV/Excel uploads. *(Validated in Phase 1: Data Ingestion Foundation)*
 - [x] Train machine learning models (Random Forest + time-series) to learn variable relationships. *(Validated in Phase 2: Core ML Modeling)*
 - [x] Build a lightweight in-memory knowledge graph (e.g., NetworkX) to represent dependencies (oil → shipping → products). *(Validated in Phase 3: Knowledge Graph Structure)*
+- [x] Predict cascading effects and ripple impacts when a root variable changes. *(Validated in Phase 4: Simulation Engine Execution)*
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Predict cascading effects and ripple impacts when a root variable changes.
 - [ ] Provide an interactive dashboard with graphs and visualizations for "what-if" simulations.
 - [ ] Display real-time predictions with AI explanations and confidence scores.
 

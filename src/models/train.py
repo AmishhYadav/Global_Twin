@@ -52,6 +52,7 @@ def train_models(df, target_cols):
         
         results[target] = {
             'model': rf,
+            'feature_names': feature_cols,
             'metrics': {
                 'RMSE': rmse,
                 'MAE': mae,
