@@ -5,16 +5,19 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 def train_models(df, target_cols):
     """
-    Train a separate Random Forest Regressor for each target column sequentially using T+1 prediction.
+    Train a separate Random Forest Regressor for each target column using T+1 prediction.
     
     Args:
-        df: DataFrame with engineered features.
+        df: DataFrame with engineered features (numeric only, Date should be the index not a column).
         target_cols: List of column names to forecast.
     
     Returns:
         dict: Trained models, evaluation metrics, and feature importances mapped by target.
     """
     results = {}
+    
+    # Only use numeric columns as features
+    numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     
     for target in target_cols:
         # Shift target by -1 to predict T+1
@@ -24,7 +27,7 @@ def train_models(df, target_cols):
         # Drop the last row which will be NaN due to shift(-1)
         df_shifted.dropna(subset=['Target'], inplace=True)
         
-        feature_cols = [c for c in df.columns if np.issubdtype(df[c].dtype, np.number)]
+        feature_cols = [c for c in numeric_cols]
         X = df_shifted[feature_cols]
         y = df_shifted['Target']
         

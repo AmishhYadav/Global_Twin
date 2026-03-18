@@ -6,7 +6,7 @@ def create_time_series_features(df, lags=[1, 3, 7], rolling_windows=[7, 14]):
     Generate time series features including lags, moving averages, and percentage changes.
     
     Args:
-        df: Pandas DataFrame with datetime index.
+        df: Pandas DataFrame (must contain only numeric columns; Date should be the index or excluded).
         lags: List of days to lag.
         rolling_windows: List of window sizes for moving averages & ROC.
         
@@ -15,10 +15,10 @@ def create_time_series_features(df, lags=[1, 3, 7], rolling_windows=[7, 14]):
     """
     df_feat = df.copy()
     
-    for col in df.columns:
-        if not np.issubdtype(df[col].dtype, np.number):
-            continue
-            
+    # Only operate on numeric columns
+    numeric_cols = df_feat.select_dtypes(include=[np.number]).columns.tolist()
+    
+    for col in numeric_cols:
         # Lags
         for lag in lags:
             df_feat[f"{col}_lag_{lag}"] = df_feat[col].shift(lag)

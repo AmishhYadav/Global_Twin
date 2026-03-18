@@ -1,32 +1,44 @@
 import pandas as pd
+import numpy as np
 from src.features.build_features import create_time_series_features
 
 def run_simulation(models_dict, base_df, shock_node, shock_pct, horizon=3):
     """
-    Run temporal cascade simulation natively through sliding ML variables for T+x horizon.
+    Run temporal cascade simulation through sliding ML variables for T+x horizon.
     
     Args:
         models_dict: Output of train_models
-        base_df: Cleaned dataframe tracking real historicals (used to build sliding windows)
-        shock_node: Column name to shock natively
-        shock_pct: Percentage to adjust (e.g. 0.20)
+        base_df: Cleaned dataframe with DatetimeIndex tracking real historicals
+        shock_node: Column name to shock
+        shock_pct: Percentage to adjust (e.g. 0.20 for +20%)
         horizon: T+ steps out to forecast
+    
+    Returns:
+        dict with baseline and shocked trajectory arrays plus updated DataFrames.
     """
-    # Defensive chronological copies
+    # Ensure we have a DatetimeIndex for time-stepping
     df_base = base_df.copy()
     df_shock = base_df.copy()
     
-    # Identify the exact last index in df_shock (which is theoretically T=0 today)
-    last_idx = df_shock.index[-1]
+    # If there's a Date column, set it as index
+    if 'Date' in df_base.columns:
+        df_base = df_base.set_index('Date')
+        df_shock = df_shock.set_index('Date')
     
-    # Apply initial percentage shock directly to timeline parameter
+    # If index is not datetime, create one
+    if not isinstance(df_base.index, pd.DatetimeIndex):
+        df_base.index = pd.date_range(end='2021-12-31', periods=len(df_base), freq='D')
+        df_shock.index = pd.date_range(end='2021-12-31', periods=len(df_shock), freq='D')
+    
+    # Apply initial percentage shock at last known timestamp
+    last_idx = df_shock.index[-1]
     df_shock.loc[last_idx, shock_node] = df_shock.loc[last_idx, shock_node] * (1 + shock_pct)
     
     base_trajectories = []
     shock_trajectories = []
     
     for step in range(1, horizon + 1):
-        # 1. Regenerate features completely fresh (dropping NAs built into the function)
+        # 1. Regenerate features completely fresh
         feat_base = create_time_series_features(df_base).iloc[-1:]
         feat_shock = create_time_series_features(df_shock).iloc[-1:]
         
@@ -38,7 +50,16 @@ def run_simulation(models_dict, base_df, shock_node, shock_pct, horizon=3):
             rf = model_data['model']
             features = model_data['feature_names']
             
-            # Predict
+            # Ensure we only pass features that exist in our current dataframe
+            available_features = [f for f in features if f in feat_base.columns]
+            
+            # If missing features, fill with 0 (edge case for first few steps)
+            for f in features:
+                if f not in feat_base.columns:
+                    feat_base[f] = 0.0
+                if f not in feat_shock.columns:
+                    feat_shock[f] = 0.0
+            
             b_pred = rf.predict(feat_base[features])[0]
             s_pred = rf.predict(feat_shock[features])[0]
             
@@ -58,8 +79,7 @@ def run_simulation(models_dict, base_df, shock_node, shock_pct, horizon=3):
         for k, v in step_shock_preds.items():
             new_row_shock[k] = v
             
-        # Optional: Maintain shock state persistence across T+1, 2, 3 so the array 
-        # treats the new structural price as permanent for independent variables that weren't ML evaluated
+        # Maintain shock state persistence across T+1, 2, 3
         new_row_shock[shock_node] = df_shock.loc[df_shock.index[-1], shock_node]
             
         df_base = pd.concat([df_base, pd.DataFrame([new_row_base])])
