@@ -4,7 +4,9 @@ import json
 import pandas as pd
 import numpy as np
 import streamlit as st
+import streamlit.components.v1 as components
 import plotly.graph_objects as go
+from pyvis.network import Network
 
 # Ensure src module is visible for nested imports natively
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
@@ -40,6 +42,22 @@ st.markdown("Inject percentage shocks into structural economic variables to math
 
 with st.spinner("Initializing ML Models and extracting historical data..."):
     base_df, models, graph = load_and_train_backend()
+
+# --- TOPOLOGY KNOWLEDGE GRAPH ---
+with st.expander("View Interactive Causal Topology Graph", expanded=True):
+    # Construct Pyvis Network dynamically from Phase 3 structural output
+    net = Network(height="350px", width="100%", bgcolor="white", font_color="black", directed=True)
+    net.force_atlas_2based()
+    net.from_nx(graph)
+    
+    # Exploit temporary filesystem to securely transfer HTML Physics bounds
+    html_path = "/tmp/ui_knowledge_graph.html"
+    net.save_graph(html_path)
+    
+    # Inject directly into Streamlit UI framework securely
+    with open(html_path, 'r', encoding='utf-8') as f:
+        html_data = f.read()
+    components.html(html_data, height=365)
 
 # --- Sidebar Inputs ---
 st.sidebar.header("Simulator Configuration")
