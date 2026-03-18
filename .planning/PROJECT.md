@@ -14,13 +14,12 @@ Accurately model interconnected global systems to predict the ripple effects of 
 
 <!-- Shipped and confirmed valuable. -->
 
-(None yet — ship to validate)
+- [x] Ingest real-world historical data via static CSV/Excel uploads. *(Validated in Phase 1: Data Ingestion Foundation)*
 
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-- [ ] Ingest real-world historical data via static CSV/Excel uploads.
 - [ ] Train machine learning models (Random Forest + time-series) to learn variable relationships.
 - [ ] Build a lightweight in-memory knowledge graph (e.g., NetworkX) to represent dependencies (oil → shipping → products).
 - [ ] Predict cascading effects and ripple impacts when a root variable changes.
