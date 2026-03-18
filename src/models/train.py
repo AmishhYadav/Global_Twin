@@ -24,7 +24,7 @@ def train_models(df, target_cols):
         # Drop the last row which will be NaN due to shift(-1)
         df_shifted.dropna(subset=['Target'], inplace=True)
         
-        feature_cols = [c for c in df.columns]
+        feature_cols = [c for c in df.columns if np.issubdtype(df[c].dtype, np.number)]
         X = df_shifted[feature_cols]
         y = df_shifted['Target']
         
