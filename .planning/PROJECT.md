@@ -19,6 +19,7 @@ Accurately model interconnected global systems to predict the ripple effects of 
 - [x] Build a lightweight in-memory knowledge graph (e.g., NetworkX) to represent dependencies (oil → shipping → products). *(Validated in Phase 3: Knowledge Graph Structure)*
 - [x] Predict cascading effects and ripple impacts when a root variable changes. *(Validated in Phase 4: Simulation Engine Execution)*
 - [x] Display real-time predictions with AI explanations and confidence scores. *(Validated in Phase 5: Output & XAI Explainability)*
+- [x] Provide an interactive dashboard with graphs and visualizations for "what-if" simulations. *(Validated in Phase 6: Dashboard Layout & Charting)*
 
 ### Active
 
