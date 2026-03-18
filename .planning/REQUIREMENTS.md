@@ -29,4 +29,10 @@
 - **Micro-level factory/truck tracking:** Model operates at a macroeconomic/industry-variable level, not at a discrete simulation level.
 
 ## Traceability
-*(To be updated by roadmap)*
+- **Phase 1**: DATA-01, DATA-02
+- **Phase 2**: ML-01
+- **Phase 3**: SIM-01
+- **Phase 4**: SIM-02, SIM-03
+- **Phase 5**: SIM-04, SIM-05
+- **Phase 6**: UI-01
+- **Phase 7**: UI-02, UI-03
