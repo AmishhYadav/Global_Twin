@@ -5,7 +5,7 @@
 | # | Phase | Goal | Requirements | Criteria |
 |---|-------|------|--------------|----------|
 | 1 | Data Ingestion Foundation | Establish parsing and normalization of historical datasets | DATA-01, DATA-02 | 3 |
-| 2 | Core ML Modeling | Train Random Forest models to learn dependencies between variables | ML-01 | 3 |
+| 2 | Core ML Modeling | Train Random Forest models to learn dependencies between variables | ML-01 | 4 |
 | 3 | Knowledge Graph Structure | Build NetworkX in-memory graph to represent dependencies | SIM-01 | 3 |
 | 4 | Simulation Engine Execution | Cascade "what-if" shocks through the graph | SIM-02, SIM-03 | 2 |
 | 5 | Output & XAI Explainability | Provide confidence bounds and text-based path explanations | SIM-04, SIM-05 | 2 |
@@ -29,8 +29,9 @@
 **Requirements**: ML-01
 **Success Criteria**:
 1. System splits data temporally without leakage.
-2. Model successfully predicts T+1 for all variables based on lags.
-3. Feature importance scores are extractable for each relationship.
+2. Model successfully predicts T+1 with baseline evaluation metrics logged (RMSE, MAE, R²).
+3. Feature importance analysis is performable for each relationship to establish graph nodes.
+4. Basic explainability reports can be generated for the model's predictions.
 
 ### Phase 3: Knowledge Graph Structure
 **Goal**: Build NetworkX in-memory graph to represent dependencies
