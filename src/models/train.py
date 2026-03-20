@@ -23,11 +23,11 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 MODEL_CONFIGS = {
     "RandomForest": {
         "class": RandomForestRegressor,
-        "params": {"n_estimators": 150, "max_depth": 12, "random_state": 42, "n_jobs": -1},
+        "params": {"n_estimators": 60, "max_depth": 10, "random_state": 42, "n_jobs": -1},
     },
     "GradientBoosting": {
         "class": GradientBoostingRegressor,
-        "params": {"n_estimators": 150, "max_depth": 5, "learning_rate": 0.1, "random_state": 42},
+        "params": {"n_estimators": 80, "max_depth": 4, "learning_rate": 0.1, "random_state": 42},
     },
 }
 

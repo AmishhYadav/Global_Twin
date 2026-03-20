@@ -86,22 +86,21 @@ st.markdown("""
 
 @st.cache_resource
 def init_backend():
-    """Initialize data, features, models, and graph."""
+    """Initialize data, features, models, and graph — optimized for fast startup."""
     mgr = CountryDataManager()
     mgr.load_synthetic()
     
     df = mgr.get_all_data()
-    feat_df = build_full_feature_matrix(df, lags=[1, 3], rolling_windows=[7])
+    # Lighter feature engineering: single lag + smaller window
+    feat_df = build_full_feature_matrix(df, lags=[1], rolling_windows=[5])
     
-    # Train models on key targets across countries
+    # Core targets only (10 instead of 17 for ~3x faster training)
     targets = [
-        'CRUDE_OIL', 'SP500', 'GOLD', 'VIX', 'BALTIC_DRY_INDEX',
-        'US_CPI_INFLATION', 'US_UNEMPLOYMENT', 'US_GDP_GROWTH',
-        'EU_CPI_INFLATION', 'EU_UNEMPLOYMENT',
-        'CN_GDP_GROWTH', 'IN_GDP_GROWTH', 'JP_GDP_GROWTH',
-        'EUR_USD', 'CNY_USD', 'INR_USD', 'JPY_USD',
+        'CRUDE_OIL', 'SP500', 'GOLD', 'VIX',
+        'US_CPI_INFLATION', 'US_GDP_GROWTH',
+        'CN_GDP_GROWTH', 'IN_GDP_GROWTH',
+        'EUR_USD', 'INR_USD',
     ]
-    # Only train on targets that exist in feature matrix
     available_targets = [t for t in targets if t in feat_df.columns]
     
     models = train_models(feat_df, available_targets, verbose=False)
