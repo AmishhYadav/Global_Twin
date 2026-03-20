@@ -72,20 +72,44 @@ def render_results(payload, horizon):
         st.warning("No results.")
         return
 
-    applied = payload.get("applied_shocks", {})
-    if applied:
-        with st.expander("🔧 What was changed (input shocks)", expanded=False):
-            rows = [{"Variable": v, "Before": f"{i['original']:.2f}",
-                      "After": f"{i['shocked']:.2f}", "Change": f"{i['pct']*100:+.0f}%"}
-                    for v, i in applied.items()]
-            st.table(pd.DataFrame(rows))
+    # ── CHAIN REACTION SUMMARY (the key addition) ──
+    chain = payload.get("chain_reaction", [])
+    if chain:
+        st.subheader("⛓️ Chain Reaction — What happened and WHY")
+        st.caption("Read top to bottom: your shock (⚡) triggers cascade effects (📡)")
 
+        for item in chain:
+            icon = "⚡" if item['type'] == 'direct_shock' else "📡"
+            name = item.get('name', item['variable'])
+            change = item['change']
+            reason = item['reason']
+
+            # Color the change
+            color = "🟢" if change.startswith("+") else "🔴"
+
+            st.markdown(f"{icon} **{name}** `{change}` {color}")
+            st.caption(f"   ↳ {reason}")
+
+            if item.get('path'):
+                st.caption(f"   📍 Path: {item['path']}")
+
+        st.divider()
+
+    # ── PER-VARIABLE CHARTS ──
     for var, data in nodes.items():
         traj = data.get('trajectory', [])
         if not traj:
             continue
 
-        st.subheader(f"{'🎯' if data.get('is_shock_origin') else '📡'} {var}")
+        var_name = data.get('var_name', var)
+        is_origin = data.get('is_shock_origin', False)
+        final = traj[-1]
+
+        # Skip variables with negligible change
+        if abs(final['percentage_delta']) < 0.01 and not is_origin:
+            continue
+
+        st.subheader(f"{'⚡' if is_origin else '📡'} {var_name} ({var})")
 
         col_chart, col_info = st.columns([3, 1])
 
@@ -97,23 +121,26 @@ def render_results(payload, horizon):
                 y=[s['bounds']['upper_bound'] for s in traj] +
                   [s['bounds']['lower_bound'] for s in traj][::-1],
                 fill='toself', fillcolor='rgba(59,130,246,0.1)',
-                line=dict(color='rgba(0,0,0,0)'), name='Confidence Band', hoverinfo="skip"
+                line=dict(color='rgba(0,0,0,0)'), name='Confidence', hoverinfo="skip"
             ))
             fig.add_trace(go.Scatter(x=steps, y=[s['baseline'] for s in traj],
-                mode='lines+markers', name='No Shock', line=dict(color='#6b7280', dash='dot')))
+                mode='lines+markers', name='Without shock', line=dict(color='#6b7280', dash='dot')))
             fig.add_trace(go.Scatter(x=steps, y=[s['shocked'] for s in traj],
-                mode='lines+markers', name='After Shock', line=dict(color='#3b82f6', width=3)))
-            fig.update_layout(height=280, template="plotly_dark",
+                mode='lines+markers', name='With shock', line=dict(color='#3b82f6', width=3)))
+            fig.update_layout(height=250, template="plotly_dark",
                 margin=dict(l=10, r=10, t=10, b=10), hovermode="x unified",
                 legend=dict(orientation="h", y=1.12))
             st.plotly_chart(fig, use_container_width=True)
 
         with col_info:
-            final = traj[-1]
             direction = "📈" if final['percentage_delta'] > 0 else "📉"
-            st.metric(f"{direction} T+{horizon} Change", f"{final['percentage_delta']:+.1f}%")
-            tag = "Directly shocked" if data.get('is_shock_origin') else "Cascade effect"
-            st.caption(tag)
+            st.metric(f"{direction} Impact by T+{horizon}",
+                      f"{final['percentage_delta']:+.1f}%")
+            if is_origin:
+                st.caption("⚡ You directly changed this")
+            else:
+                st.caption("📡 Changed due to ripple effect")
+
             explanation = data.get('explanation', '')
             if explanation:
                 st.info(explanation)
