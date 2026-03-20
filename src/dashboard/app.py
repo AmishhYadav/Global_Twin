@@ -86,27 +86,28 @@ st.markdown("""
 
 @st.cache_resource
 def init_backend():
-    """Initialize data, features, models, and graph — optimized for fast startup."""
+    """Initialize data, features, models, and graph — fast startup mode."""
+    import time
+    t0 = time.time()
+    
     mgr = CountryDataManager()
     mgr.load_synthetic()
-    
     df = mgr.get_all_data()
-    # Lighter feature engineering: single lag + smaller window
-    feat_df = build_full_feature_matrix(df, lags=[1], rolling_windows=[5])
     
-    # Core targets only (10 instead of 17 for ~3x faster training)
-    targets = [
-        'CRUDE_OIL', 'SP500', 'GOLD', 'VIX',
-        'US_CPI_INFLATION', 'US_GDP_GROWTH',
-        'CN_GDP_GROWTH', 'IN_GDP_GROWTH',
-        'EUR_USD', 'INR_USD',
-    ]
+    # FAST: only time-series features on base columns (skip cross-country/sector layers)
+    feat_df = create_time_series_features(df, lags=[1], rolling_windows=[5])
+    print(f"  [Init] Features: {feat_df.shape[1]} cols, {feat_df.shape[0]} rows ({time.time()-t0:.1f}s)")
+    
+    # Train only 5 core targets with RF only for speed
+    targets = ['CRUDE_OIL', 'SP500', 'GOLD', 'US_GDP_GROWTH', 'INR_USD']
     available_targets = [t for t in targets if t in feat_df.columns]
     
     models = train_models(feat_df, available_targets, verbose=False)
+    print(f"  [Init] Models trained: {len(models)} ({time.time()-t0:.1f}s)")
     
     os.makedirs("models", exist_ok=True)
     G = create_knowledge_graph(models, importance_threshold=0.03, save_path="models/v2_graph.json")
+    print(f"  [Init] Complete in {time.time()-t0:.1f}s")
     
     return mgr, df, feat_df, models, G
 
