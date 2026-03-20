@@ -52,6 +52,8 @@ def create_time_series_features(df, lags=[1, 3, 7], rolling_windows=[7, 14]):
             new_cols[f"{col}_roc_{w}"] = series.pct_change(periods=w)
     
     df_feat = pd.concat([df_feat, pd.DataFrame(new_cols, index=df_feat.index)], axis=1)
+    # Replace inf/-inf (from pct_change dividing by zero in real data)
+    df_feat.replace([np.inf, -np.inf], np.nan, inplace=True)
     df_feat.dropna(inplace=True)
     return df_feat
 
