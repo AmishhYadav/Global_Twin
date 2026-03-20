@@ -38,17 +38,20 @@ def create_time_series_features(df, lags=[1, 3, 7], rolling_windows=[7, 14]):
     df_feat = df.copy()
     numeric_cols = df_feat.select_dtypes(include=[np.number]).columns.tolist()
     
+    # Batch-build all new columns in a dict to avoid DataFrame fragmentation
+    new_cols = {}
     for col in numeric_cols:
+        series = df_feat[col]
         for lag in lags:
-            df_feat[f"{col}_lag_{lag}"] = df_feat[col].shift(lag)
-            # Momentum: difference between current and lagged value
-            df_feat[f"{col}_momentum_{lag}"] = df_feat[col] - df_feat[col].shift(lag)
+            new_cols[f"{col}_lag_{lag}"] = series.shift(lag)
+            new_cols[f"{col}_momentum_{lag}"] = series - series.shift(lag)
         
         for w in rolling_windows:
-            df_feat[f"{col}_rmean_{w}"] = df_feat[col].rolling(window=w).mean()
-            df_feat[f"{col}_rstd_{w}"] = df_feat[col].rolling(window=w).std()
-            df_feat[f"{col}_roc_{w}"] = df_feat[col].pct_change(periods=w)
+            new_cols[f"{col}_rmean_{w}"] = series.rolling(window=w).mean()
+            new_cols[f"{col}_rstd_{w}"] = series.rolling(window=w).std()
+            new_cols[f"{col}_roc_{w}"] = series.pct_change(periods=w)
     
+    df_feat = pd.concat([df_feat, pd.DataFrame(new_cols, index=df_feat.index)], axis=1)
     df_feat.dropna(inplace=True)
     return df_feat
 
