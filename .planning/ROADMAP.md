@@ -1,72 +1,89 @@
 # Project Roadmap
 
-**7 phases** | **10 requirements mapped** | All v1 requirements covered ✓
+**v1.0** — [Archived](milestones/v1.0-ROADMAP.md) ✓ (7 phases, completed 2026-03-19)
+
+---
+
+## v2.0 — Global Twin Expansion
+
+**8 phases** | **12 requirements mapped** | Target: Real-world multi-country simulation
 
 | # | Phase | Goal | Requirements | Criteria |
 |---|-------|------|--------------|----------|
-| 1 | Data Ingestion Foundation | Establish parsing and normalization of historical datasets | DATA-01, DATA-02 | 3 |
-| 2 | Core ML Modeling | Train Random Forest models to learn dependencies between variables | ML-01 | 4 |
-| 3 | Knowledge Graph Structure | Build NetworkX in-memory graph to represent dependencies | SIM-01 | 3 |
-| 4 | Simulation Engine Execution | Cascade "what-if" shocks through the graph | SIM-02, SIM-03 | 2 |
-| 5 | Output & XAI Explainability | Provide confidence bounds and text-based path explanations | SIM-04, SIM-05 | 2 |
-| 6 | Dashboard Layout & Charting | Build React/Next.js UI to compare baseline vs shock outputs | UI-01 | 3 |
-| 7 | Interactive Graph UI | Render the NetworkX graph in the UI and show ripple propagation | UI-02, UI-03 | 3 |
+| 8 | Real-World Data Integration | Pull 15+ real economic indicators from FRED & Yahoo Finance | DATA-03, DATA-04 | 3 |
+| 9 | Multi-Country Data Architecture | Restructure data layer for 5 economies (US, EU, CN, IN, JP) | DATA-05, DATA-06 | 3 |
+| 10 | Enhanced Feature Engineering | Cross-country correlations, inter-sector features, global composites | ML-02 | 3 |
+| 11 | Multi-Model ML Pipeline | RF + Gradient Boosting with model comparison and registry | ML-03, ML-04 | 4 |
+| 12 | Cross-Country Knowledge Graph | Massive DAG with intra-country AND cross-border causal edges | SIM-06 | 3 |
+| 13 | Scenario Engine | Pre-built macro shock scenarios (Oil Embargo, Trade War, Pandemic, Rate Hike) | SIM-07, SIM-08 | 3 |
+| 14 | Dashboard Redesign | Multi-tab layout: World View, Country Dive, Scenario Lab, Graph Explorer | UI-04, UI-05 | 4 |
+| 15 | Polish, Docs & Deploy | Error handling, loading states, README, deployment config | INFRA-01 | 2 |
 
 ---
 
 ## Phase Details
 
-### Phase 1: Data Ingestion Foundation
-**Goal**: Establish parsing and normalization of historical CSV datasets
-**Requirements**: DATA-01, DATA-02
+### Phase 8: Real-World Data Integration
+**Goal**: Pull ~15 real economic indicators from FRED and Yahoo Finance APIs
+**Requirements**: DATA-03, DATA-04
 **Success Criteria**:
-1. User can successfully upload a CSV via REST endpoint or local script.
-2. System normalizes date formats and handles missing values silently or with warnings.
-3. System outputs a clean, unified Pandas DataFrame ready for ML training.
+1. Indicator registry defines all tracked variables with source API and ticker/series ID.
+2. Fetcher downloads 5+ years of daily/monthly data per indicator.
+3. Raw data saved as normalized CSVs in `data/raw/`.
 
-### Phase 2: Core ML Modeling
-**Goal**: Train Random Forest models to learn dependencies between variables
-**Requirements**: ML-01
+### Phase 9: Multi-Country Data Architecture
+**Goal**: Restructure data layer for 5 economies (US, EU, China, India, Japan)
+**Requirements**: DATA-05, DATA-06
 **Success Criteria**:
-1. System splits data temporally without leakage.
-2. Model successfully predicts T+1 with baseline evaluation metrics logged (RMSE, MAE, R²).
-3. Feature importance analysis is performable for each relationship to establish graph nodes.
-4. Basic explainability reports can be generated for the model's predictions.
+1. Each country has its own indicator set with standardized column naming.
+2. Cross-country reference table links equivalent indicators.
+3. Unified loader can query by country + indicator.
 
-### Phase 3: Knowledge Graph Structure
-**Goal**: Build NetworkX in-memory graph to represent dependencies
-**Requirements**: SIM-01
+### Phase 10: Enhanced Feature Engineering
+**Goal**: Cross-country correlations, inter-sector dependencies, global composites
+**Requirements**: ML-02
 **Success Criteria**:
-1. Directed graph is built automatically from the ML feature importances.
-2. Graph nodes are variables; edges have weights representing correlation strength.
-3. Graph can be queried for child/parent node relationships.
+1. Features include cross-country lag correlations (e.g., US rate → INR/USD).
+2. Global composite indicators computed (e.g., weighted GDP index).
+3. Feature matrix supports 50+ columns per country.
 
-### Phase 4: Simulation Engine Execution
-**Goal**: Cascade "what-if" shocks through the graph
-**Requirements**: SIM-02, SIM-03
+### Phase 11: Multi-Model ML Pipeline
+**Goal**: RF + Gradient Boosting with model comparison and registry
+**Requirements**: ML-03, ML-04
 **Success Criteria**:
-1. System accepts a root node shock (e.g., Variable X = +20%).
-2. Engine computes multi-step cascading impacts downstream over time (T+1, T+2...).
+1. Both RF and GBR trained per target variable.
+2. Best model auto-selected by validation RMSE.
+3. Model registry stores metadata, metrics, and feature names.
+4. Comparison report generated per target.
 
-### Phase 5: Output & XAI Explainability
-**Goal**: Provide confidence bounds and text-based path explanations
-**Requirements**: SIM-04, SIM-05
+### Phase 12: Cross-Country Knowledge Graph
+**Goal**: Massive DAG spanning all countries with cross-border causal edges
+**Requirements**: SIM-06
 **Success Criteria**:
-1. Output payload includes confidence intervals.
-2. Generator creates a plain-text explanation of the strongest propagation path.
+1. Graph has 50+ nodes (variables × countries).
+2. Edges include both intra-country and cross-border dependencies.
+3. DAG constraint enforced with cycle breaking.
 
-### Phase 6: Dashboard Layout & Charting
-**Goal**: Build React UI to compare baseline vs shock outputs
-**Requirements**: UI-01
+### Phase 13: Scenario Engine
+**Goal**: Pre-built macro shock scenarios
+**Requirements**: SIM-07, SIM-08
 **Success Criteria**:
-1. Frontend pulls simulation output from the backend API.
-2. Line charts render Baseline alongside Shock trajectory.
-3. User can input shock parameters from a web form.
+1. Scenario registry defines 4+ named scenarios with multi-variable shocks.
+2. User selects a scenario and system applies all shocks simultaneously.
+3. Custom scenario builder allows mixing variables and magnitudes.
 
-### Phase 7: Interactive Graph UI
-**Goal**: Render the NetworkX graph in the UI and show ripple propagation
-**Requirements**: UI-02, UI-03
+### Phase 14: Dashboard Redesign
+**Goal**: Multi-tab Streamlit layout with world view, country drill-down, scenario lab
+**Requirements**: UI-04, UI-05
 **Success Criteria**:
-1. Graph is rendered cleanly using Vis.js or Plotly.
-2. Nodes and edges adjust visually to represent the shock's path.
-3. System responds smoothly to graph drill-downs.
+1. World View tab shows global heatmap of variable states.
+2. Country Deep-Dive tab filters charts by selected economy.
+3. Scenario Lab tab offers pre-built + custom shock builder.
+4. Graph Explorer tab renders full cross-country DAG.
+
+### Phase 15: Polish, Docs & Deploy
+**Goal**: Production readiness with error handling and documentation
+**Requirements**: INFRA-01
+**Success Criteria**:
+1. Graceful error handling for API failures and missing data.
+2. Loading states and progress bars in dashboard.

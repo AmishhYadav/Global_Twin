@@ -1,38 +1,34 @@
-# Requirements
+# Requirements — v2.0
 
-## v1 Requirements
+## Data Ingestion (DATA)
+- [ ] **DATA-03**: System fetches real-world economic indicators from FRED and Yahoo Finance APIs.
+- [ ] **DATA-04**: Raw data is normalized and stored as clean CSVs in `data/raw/`.
+- [ ] **DATA-05**: System supports 5 economies (US, EU, China, India, Japan) with per-country indicator sets.
+- [ ] **DATA-06**: Unified data loader queries by country and indicator name.
 
-### Data Ingestion (DATA)
-- [ ] **DATA-01**: User can upload static CSV/Excel files containing historical time-series data.
-- [ ] **DATA-02**: System automatically parses, normalizes dates, and handles basic missing values.
+## Machine Learning (ML)
+- [ ] **ML-02**: Feature engineering includes cross-country correlations and global composite indicators.
+- [ ] **ML-03**: System trains multiple model types (RF + Gradient Boosting) per target variable.
+- [ ] **ML-04**: Best model auto-selected per target; model registry stores metadata and metrics.
 
-### Machine Learning (ML)
-- [ ] **ML-01**: System trains a Random Forest + Time-Series model to learn variable dependencies based on historical data.
+## Knowledge Graph & Simulation (SIM)
+- [ ] **SIM-06**: Knowledge graph spans multiple countries with cross-border causal edges (50+ nodes).
+- [ ] **SIM-07**: Pre-built scenarios (Oil Embargo, Trade War, Pandemic, Rate Hike) apply multi-variable shocks.
+- [ ] **SIM-08**: Custom scenario builder allows user-defined multi-variable shock combinations.
 
-### Knowledge Graph & Simulation (SIM)
-- [ ] **SIM-01**: System builds a lightweight in-memory directed graph (NetworkX) representing dependencies (e.g., Oil -> Shipping).
-- [ ] **SIM-02**: User can input a "what-if" scenario / shock (e.g., Oil +20% spike at Month 3).
-- [ ] **SIM-03**: System cascades the shock through the graph to predict downstream impact over time.
-- [ ] **SIM-04**: Predictions include a confidence score or interval.
-- [ ] **SIM-05**: System provides a text-based XAI explanation of the propagation path.
+## Dashboard & Visualization (UI)
+- [ ] **UI-04**: Multi-tab dashboard with World View, Country Deep-Dive, Scenario Lab, and Graph Explorer.
+- [ ] **UI-05**: World View shows global heatmap; Country view filters by economy.
 
-### Dashboard & Visualization (UI)
-- [ ] **UI-01**: Display baseline future predictions vs shock output in interactive charts.
-- [ ] **UI-02**: Display an interactive network graph of the variables.
-- [ ] **UI-03**: Highlight the cascading pathway on the graph when a simulation runs.
-
-## v2 Requirements (Deferred)
-- Live API integration for real-time automated data ingest (AlphaVantage, World Bank, etc.).
-- Dedicated scalable Graph Database (Neo4j) for massive industry-scale networks.
-
-## Out of Scope
-- **Micro-level factory/truck tracking:** Model operates at a macroeconomic/industry-variable level, not at a discrete simulation level.
+## Infrastructure (INFRA)
+- [ ] **INFRA-01**: Graceful error handling for API failures, loading states, and deployment readiness.
 
 ## Traceability
-- **Phase 1**: DATA-01, DATA-02
-- **Phase 2**: ML-01
-- **Phase 3**: SIM-01
-- **Phase 4**: SIM-02, SIM-03
-- **Phase 5**: SIM-04, SIM-05
-- **Phase 6**: UI-01
-- **Phase 7**: UI-02, UI-03
+- **Phase 8**: DATA-03, DATA-04
+- **Phase 9**: DATA-05, DATA-06
+- **Phase 10**: ML-02
+- **Phase 11**: ML-03, ML-04
+- **Phase 12**: SIM-06
+- **Phase 13**: SIM-07, SIM-08
+- **Phase 14**: UI-04, UI-05
+- **Phase 15**: INFRA-01

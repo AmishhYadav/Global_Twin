@@ -1,12 +1,11 @@
-# Global Digital Twin AI – Supply Chain & Energy Impact Simulator
+# Global Twin — Project Definition
 
-## What This Is
+## Vision
+A real-world macroeconomic simulation engine that models interconnected global systems across 5 major economies (US, EU, China, India, Japan) to predict the cascading ripple effects of economic shocks.
 
-An AI-powered simulation system that ingests economic and supply chain data (like oil prices, shipping costs, inflation) to model their interconnected relationships. It allows users to run "what-if" scenarios to predict the cascading ripple effects of global events on product prices and inflation, visualized through an interactive dashboard.
-
-## Core Value
-
-Accurately model interconnected global systems to predict the ripple effects of economic and supply chain changes across industries.
+## Current State
+- **v1.0** shipped (2026-03-19): End-to-end proof-of-concept with synthetic data, 3 variables, RF models, DAG graph, Streamlit dashboard.
+- **v2.0** in progress: Real-world data, 5 economies, 15+ indicators, multi-model pipeline, scenario engine, redesigned dashboard.
 
 ## Requirements
 
@@ -14,43 +13,28 @@ Accurately model interconnected global systems to predict the ripple effects of 
 
 <!-- Shipped and confirmed valuable. -->
 
-- [x] Ingest real-world historical data via static CSV/Excel uploads. *(Validated in Phase 1: Data Ingestion Foundation)*
-- [x] Train machine learning models (Random Forest + time-series) to learn variable relationships. *(Validated in Phase 2: Core ML Modeling)*
-- [x] Build a lightweight in-memory knowledge graph (e.g., NetworkX) to represent dependencies (oil → shipping → products). *(Validated in Phase 3: Knowledge Graph Structure)*
-- [x] Predict cascading effects and ripple impacts when a root variable changes. *(Validated in Phase 4: Simulation Engine Execution)*
-- [x] Display real-time predictions with AI explanations and confidence scores. *(Validated in Phase 5: Output & XAI Explainability)*
-- [x] Provide an interactive dashboard with graphs and visualizations for "what-if" simulations. *(Validated in Phase 6: Dashboard Layout & Charting)*
-- [x] Visualize the knowledge graph as an interactive network diagram. *(Validated in Phase 7: Interactive Graph UI)*
+- [x] Ingest real-world historical data via static CSV/Excel uploads. *(v1.0)*
+- [x] Train ML models to learn variable relationships. *(v1.0)*
+- [x] Build in-memory knowledge graph representing dependencies. *(v1.0)*
+- [x] Predict cascading effects when a root variable changes. *(v1.0)*
+- [x] Display predictions with AI explanations and confidence scores. *(v1.0)*
+- [x] Interactive dashboard with charts for "what-if" simulations. *(v1.0)*
+- [x] Interactive network diagram of the knowledge graph. *(v1.0)*
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
+<!-- Current scope — v2.0. -->
 
-- [ ] Provide an interactive dashboard with graphs and visualizations for "what-if" simulations.
+- [ ] Fetch real economic indicators from FRED & Yahoo Finance APIs.
+- [ ] Support 5 economies with per-country indicator sets.
+- [ ] Cross-country feature correlations and global composites.
+- [ ] Multi-model ML pipeline (RF + Gradient Boosting) with auto-selection.
+- [ ] Cross-country knowledge graph with 50+ nodes.
+- [ ] Pre-built macro shock scenarios (Oil Embargo, Trade War, Pandemic, Rate Hike).
+- [ ] Multi-tab dashboard: World View, Country Dive, Scenario Lab, Graph Explorer.
 
 ### Out of Scope
 
-<!-- Explicit boundaries. Includes reasoning to prevent re-adding. -->
-
-- [Live API Data Integration] — Deferred to v2. MVP will focus on static CSVs for faster iteration and proving the ML model.
-- [Dedicated Graph Database (Neo4j)] — Deferred to v2. A lightweight in-memory Python graph is sufficient for MVP complexity and keeps the stack simple.
-
-## Context
-
-- **Technical Environment:** Python-heavy backend for ML and graph modeling. Frontend will need a rich interactive dashboard (likely React/Next.js or Streamlit/Dash if staying purely in Python).
-- **Core ML Need:** Needs to handle time-series forecasting combined with graph-based dependency cascading.
-
-## Constraints
-
-- **Tech Stack**: Keep it simple for MVP. Use NetworkX instead of a heavy Graph DB. Use CSVs instead of complex API pipelines.
-- **Timeline**: Fast time-to-value for the MVP by strictly limiting data ingestion scope.
-
-## Key Decisions
-
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| Use CSVs for MVP Data | Fastest path to prove the ML relationships and UI without getting bogged down in API rate limits and pipelines. | — Pending |
-| NetworkX for Knowledge Graph | Avoids operational overhead of deploying and managing a Graph Database like Neo4j for the initial proof-of-concept. | — Pending |
-
----
-*Last updated: 2026-03-19 after initialization*
+- Micro-level factory/truck tracking (model operates at macroeconomic level).
+- Real-time streaming data (batch fetch is sufficient for v2.0).
+- Dedicated graph database (NetworkX in-memory is sufficient at current scale).
