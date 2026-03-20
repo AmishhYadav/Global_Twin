@@ -47,14 +47,23 @@ venv.bak/
 ehthumbs.db
 Thumbs.db
 
-# Project specifics
-data/
-!data/.gitkeep
+# Project specifics — ignore generated artifacts
+data/raw/*.csv
+!data/raw/.gitkeep
+models/registry/
 models/*.json
 models/*.pkl
 !models/.gitkeep
 /tmp/
 
-# GSD / IDE
+# Pyvis generated HTML
+*.html
+!src/dashboard/*.html
+
+# IDE
 .vscode/
 .idea/
+
+# GSD Planning (keep for dev, exclude from prod)
+.planning/phases/*/
+.planning/codebase/
