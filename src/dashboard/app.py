@@ -124,6 +124,95 @@ with st.spinner("⚙️ Initializing ML models across 5 economies..."):
 
 
 # ─────────────────────────────────────────────
+#  Shared: Render Simulation Results
+# ─────────────────────────────────────────────
+
+def _render_simulation_results(payload, horizon):
+    """Render interactive charts and XAI narratives."""
+    
+    nodes = payload.get("nodes", {})
+    
+    if not nodes:
+        st.warning("No results to display.")
+        return
+    
+    # Applied shocks summary
+    applied = payload.get("applied_shocks", {})
+    if applied:
+        with st.expander("📊 Applied Shocks", expanded=False):
+            shock_rows = []
+            for var, info in applied.items():
+                shock_rows.append({
+                    "Variable": var,
+                    "Original": f"{info['original']:.2f}",
+                    "Shocked": f"{info['shocked']:.2f}",
+                    "Change": f"{info['pct']*100:+.0f}%",
+                })
+            st.table(pd.DataFrame(shock_rows))
+    
+    # Per-variable results
+    for target_var, data in nodes.items():
+        traj = data.get('trajectory', [])
+        if not traj:
+            continue
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            st.subheader(f"📈 {target_var}")
+            
+            x_steps = [f"T+{s['step']}" for s in traj]
+            y_base = [s['baseline'] for s in traj]
+            y_shock = [s['shocked'] for s in traj]
+            y_lower = [s['bounds']['lower_bound'] for s in traj]
+            y_upper = [s['bounds']['upper_bound'] for s in traj]
+            
+            fig = go.Figure()
+            
+            # Confidence band
+            fig.add_trace(go.Scatter(
+                x=x_steps + x_steps[::-1], y=y_upper + y_lower[::-1],
+                fill='toself', fillcolor='rgba(233,69,96,0.15)',
+                line=dict(color='rgba(255,255,255,0)'),
+                hoverinfo="skip", showlegend=True, name='±RMSE'
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=x_steps, y=y_base, mode='lines+markers',
+                name='Baseline', line=dict(color='#6b7280', dash='dash')
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=x_steps, y=y_shock, mode='lines+markers',
+                name='Shocked', line=dict(color='#e94560', width=3)
+            ))
+            
+            fig.update_layout(
+                height=350, template="plotly_dark",
+                margin=dict(l=20, r=20, t=10, b=20),
+                hovermode="x unified"
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            final = traj[-1]
+            st.metric(
+                f"T+{horizon} Impact",
+                f"{final['percentage_delta']:+.2f}%",
+                delta=f"{final['absolute_delta']:+.2f}"
+            )
+            
+            origin_tag = "🎯 SHOCKED" if data.get('is_shock_origin') else "📡 Cascaded"
+            st.caption(origin_tag)
+            
+            st.info(f"**XAI:**\n\n{data.get('explanation', 'N/A')}")
+        
+        st.markdown("---")
+
+
+# ─────────────────────────────────────────────
 #  Tab Layout
 # ─────────────────────────────────────────────
 
@@ -419,91 +508,3 @@ with tab_graph:
         for country, nodes in summary['countries'].items():
             st.write(f"**{country}**: {', '.join(sorted(nodes))}")
 
-
-# ─────────────────────────────────────────────
-#  Shared: Render Simulation Results
-# ─────────────────────────────────────────────
-
-def _render_simulation_results(payload, horizon):
-    """Render interactive charts and XAI narratives."""
-    
-    nodes = payload.get("nodes", {})
-    
-    if not nodes:
-        st.warning("No results to display.")
-        return
-    
-    # Applied shocks summary
-    applied = payload.get("applied_shocks", {})
-    if applied:
-        with st.expander("📊 Applied Shocks", expanded=False):
-            shock_rows = []
-            for var, info in applied.items():
-                shock_rows.append({
-                    "Variable": var,
-                    "Original": f"{info['original']:.2f}",
-                    "Shocked": f"{info['shocked']:.2f}",
-                    "Change": f"{info['pct']*100:+.0f}%",
-                })
-            st.table(pd.DataFrame(shock_rows))
-    
-    # Per-variable results
-    for target_var, data in nodes.items():
-        traj = data.get('trajectory', [])
-        if not traj:
-            continue
-        
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.subheader(f"📈 {target_var}")
-            
-            x_steps = [f"T+{s['step']}" for s in traj]
-            y_base = [s['baseline'] for s in traj]
-            y_shock = [s['shocked'] for s in traj]
-            y_lower = [s['bounds']['lower_bound'] for s in traj]
-            y_upper = [s['bounds']['upper_bound'] for s in traj]
-            
-            fig = go.Figure()
-            
-            # Confidence band
-            fig.add_trace(go.Scatter(
-                x=x_steps + x_steps[::-1], y=y_upper + y_lower[::-1],
-                fill='toself', fillcolor='rgba(233,69,96,0.15)',
-                line=dict(color='rgba(255,255,255,0)'),
-                hoverinfo="skip", showlegend=True, name='±RMSE'
-            ))
-            
-            fig.add_trace(go.Scatter(
-                x=x_steps, y=y_base, mode='lines+markers',
-                name='Baseline', line=dict(color='#6b7280', dash='dash')
-            ))
-            
-            fig.add_trace(go.Scatter(
-                x=x_steps, y=y_shock, mode='lines+markers',
-                name='Shocked', line=dict(color='#e94560', width=3)
-            ))
-            
-            fig.update_layout(
-                height=350, template="plotly_dark",
-                margin=dict(l=20, r=20, t=10, b=20),
-                hovermode="x unified"
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        
-        with col2:
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            final = traj[-1]
-            st.metric(
-                f"T+{horizon} Impact",
-                f"{final['percentage_delta']:+.2f}%",
-                delta=f"{final['absolute_delta']:+.2f}"
-            )
-            
-            origin_tag = "🎯 SHOCKED" if data.get('is_shock_origin') else "📡 Cascaded"
-            st.caption(origin_tag)
-            
-            st.info(f"**XAI:**\n\n{data.get('explanation', 'N/A')}")
-        
-        st.markdown("---")
