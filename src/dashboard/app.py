@@ -192,9 +192,16 @@ with tab1:
 # ═══════════════════════════════════════
 with tab2:
     st.header("🔬 What-If Simulator")
-    st.caption("Pick a scenario to see how economic shocks cascade through the system")
+    st.markdown("""
+    **How it works:** You change a variable (e.g. "Oil +60%"). The ML model then predicts what happens next:
+    - **T+1** = tomorrow's predicted value
+    - **T+2** = day after tomorrow
+    - **T+3** = 3 days out
+    
+    The dotted line shows "no shock" (normal). The solid blue line shows the shock's effect.
+    """)
 
-    mode = st.radio("", ["🎯 Pre-built Scenarios", "🔧 Custom Shock"], horizontal=True, label_visibility="collapsed")
+    mode = st.radio("Simulation mode", ["🎯 Pre-built Scenarios", "🔧 Custom Shock"], horizontal=True, label_visibility="collapsed")
 
     if mode == "🎯 Pre-built Scenarios":
         scenario_list = list_scenarios()
@@ -216,7 +223,7 @@ with tab2:
                 direction = "⬆️" if pct > 0 else "⬇️"
                 st.write(f"{direction} **{var}**: {pct*100:+.0f}%")
 
-        horizon = st.slider("How many time steps to simulate?", 1, 5, 3)
+        horizon = st.slider("How many days ahead to predict (T+N)", 1, 5, 3)
 
         if st.button("🚀 Run Simulation", type="primary"):
             with st.spinner(f"Simulating {scenario['name']}..."):
@@ -241,7 +248,7 @@ with tab2:
                 pct = st.slider(f"Change %", -50, 100, 20, 5, key=f"cp_{i}")
             custom_shocks[var] = pct / 100.0
 
-        horizon = st.slider("Time steps", 1, 5, 3, key="ch")
+        horizon = st.slider("Days ahead to predict (T+N)", 1, 5, 3, key="ch")
 
         if st.button("🚀 Run Custom Simulation", type="primary"):
             with st.spinner("Simulating..."):
@@ -300,48 +307,73 @@ with tab3:
 with tab4:
     st.header("ℹ️ How Global Twin Works")
 
+    st.markdown("### 🎯 What does the ML actually predict?")
     st.markdown("""
-    ### The Big Idea
-    Global Twin simulates **how economic shocks spread across countries** — like how an oil price spike
-    in the Middle East can affect inflation in India and stock markets in the US.
-
-    ### Pipeline (think of it like a data pipeline)
-
-    ```
-    Raw Data (30 indicators × 5 countries)
-        ↓
-    Feature Engineering (lags, rolling stats → 192 features)
-        ↓
-    ML Training (Random Forest per target variable)
-        ↓
-    Knowledge Graph (which variables predict which)
-        ↓
-    Simulation Engine (apply shock → re-predict → cascade)
-        ↓
-    XAI (trace causal path through graph → explain in English)
-    ```
-
-    ### Key Concepts (for non-finance people)
-
-    | Term | What it means |
-    |------|--------------|
-    | **GDP** | Total economic output of a country. Think of it as "how much stuff a country produces" |
-    | **CPI / Inflation** | How fast prices are rising. Higher = things get more expensive |
-    | **Fed Rate** | The interest rate set by the US central bank. Higher = borrowing costs more |
-    | **VIX** | The "fear index". Higher = more market uncertainty |
-    | **S&P 500** | Index of 500 biggest US companies. Proxy for "how's the US stock market doing" |
-    | **INR/USD** | How many Indian Rupees per 1 US Dollar. Higher = Rupee is weaker |
-    | **Crude Oil** | Price of oil per barrel. Affects everything — transport, manufacturing, inflation |
-
-    ### What does a "shock" do?
-    When you shock a variable (e.g., Oil +60%), the system:
-    1. Changes that variable's value
-    2. Re-generates all features
-    3. Runs every ML model to predict the next time step
-    4. Repeats for T+2, T+3 (effects cascade through the graph)
-    5. Compares "what would have happened normally" vs "what happens after the shock"
-
-    ### Data
-    Currently running on **synthetic data** (realistic fake data for development).
-    Real data from FRED + Yahoo Finance is available in `data/raw/` — both free, no API keys needed.
+    Think of it like weather forecasting, but for economics.
+    
+    We have **5 target variables** the ML is trained to predict:
+    - `CRUDE_OIL` — tomorrow's oil price
+    - `SP500` — tomorrow's US stock market value
+    - `GOLD` — tomorrow's gold price
+    - `US_GDP_GROWTH` — tomorrow's US economic growth indicator
+    - `INR_USD` — tomorrow's INR/USD exchange rate
+    
+    **How?** A Random Forest model looks at **192 features** (yesterday's values, rolling averages, 
+    momentum, etc.) and learns patterns like:
+    > *"When oil went up yesterday AND VIX was high, gold tends to go up tomorrow"*
     """)
+
+    st.markdown("### ⏱️ What is T+1, T+2, T+3?")
+    st.markdown("""
+    `T` = "Today". `T+N` = "N days from now".
+    
+    **Concrete example — Oil Embargo scenario:**
+    
+    | Step | What happens |
+    |------|-------------|
+    | **T+0** | You shock Oil to +60%. Everything else stays the same. |
+    | **T+1** | ML predicts: "Given oil at +60%, Gold will be X, S&P will be Y..." |
+    | **T+2** | ML predicts again, but now using T+1's predicted values as input |
+    | **T+3** | Same — now the cascade has compounded over 3 steps |
+    
+    This is why effects **grow over time** — each step feeds into the next, like dominoes.
+    """)
+
+    st.markdown("### 🔧 The Full Pipeline")
+    st.code("""
+    1. DATA:     30 economic indicators across US, EU, China, India, Japan
+    2. FEATURES: Yesterday's values + rolling averages + momentum → 192 inputs
+    3. TRAINING: Random Forest learns "given these 192 inputs, predict tomorrow"
+    4. GRAPH:    Feature importances reveal which variables drive which
+    5. SHOCK:    User changes a variable → ML re-predicts with new value
+    6. CASCADE:  Repeat prediction using shocked outputs as next input
+    7. EXPLAIN:  Trace the graph to explain WHY each variable changed
+    """, language=None)
+
+    st.markdown("### 📖 Finance Glossary")
+    st.markdown("""
+    | Term | Plain English |
+    |------|--------------|
+    | **GDP** | How much stuff a country produces. Higher = stronger economy |
+    | **CPI / Inflation** | How fast prices rise. 2% = normal, 8% = bad |
+    | **Fed Rate** | US interest rate. Higher = expensive to borrow money |
+    | **VIX** | Fear index. Low (~15) = calm, High (~40) = panic |
+    | **S&P 500** | Top 500 US companies' stock value. Proxy for "US market" |
+    | **INR/USD** | Rupees per Dollar. ₹83 means $1 buys 83 rupees |
+    | **Crude Oil** | Oil price per barrel (~$70-80 normal). Affects EVERYTHING |
+    """)
+
+    st.markdown("### 📊 Reading the Charts")
+    st.markdown("""
+    In the Simulate tab, each chart shows:
+    - **Dotted gray line** = "What would happen normally" (no shock)
+    - **Solid blue line** = "What happens after your shock"
+    - **Light blue band** = Confidence range (model could be off by this much)
+    - **% Change** on the right = How much the shock moved this variable
+    - 🎯 = You directly changed this variable
+    - 📡 = This variable changed because of cascade effects
+    """)
+
+    st.divider()
+    st.caption("Currently running on synthetic data. Real data from FRED + Yahoo Finance is in data/raw/.")
+
