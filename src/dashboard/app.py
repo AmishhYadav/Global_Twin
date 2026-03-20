@@ -49,9 +49,20 @@ st.markdown("""
 def init_backend():
     import time
     t0 = time.time()
-    mgr = CountryDataManager()
-    mgr.load_synthetic()
-    df = mgr.get_all_data()
+    
+    # Try real data first, fall back to synthetic
+    data_source = "synthetic"
+    try:
+        from src.data.fetch import load_all_indicators
+        df = load_all_indicators("data/raw")
+        data_source = "real"
+        print(f"  [Init] Loaded REAL data: {df.shape}")
+    except Exception:
+        mgr = CountryDataManager()
+        mgr.load_synthetic()
+        df = mgr.get_all_data()
+        print(f"  [Init] Using synthetic data: {df.shape}")
+    
     feat_df = create_time_series_features(df, lags=[1], rolling_windows=[5])
     print(f"  [Init] Features: {feat_df.shape[1]} cols ({time.time()-t0:.1f}s)")
     targets = ['CRUDE_OIL', 'SP500', 'GOLD', 'US_GDP_GROWTH', 'INR_USD']
@@ -61,7 +72,7 @@ def init_backend():
     os.makedirs("models", exist_ok=True)
     G = create_knowledge_graph(models, importance_threshold=0.03, save_path="models/v2_graph.json")
     print(f"  [Init] Done in {time.time()-t0:.1f}s")
-    return mgr, df, feat_df, models, G
+    return data_source, df, feat_df, models, G
 
 
 # ── Helper: Render simulation results ──
@@ -152,8 +163,13 @@ def render_results(payload, horizon):
 st.title("🌍 Global Twin v2.0")
 st.caption("Simulate how economic shocks ripple across countries — powered by ML")
 
-with st.spinner("⚙️ Training ML models (first load only, ~7s)..."):
-    mgr, base_df, feat_df, models, graph = init_backend()
+with st.spinner("⚙️ Loading data & training ML models (~7s)..."):
+    data_source, base_df, feat_df, models, graph = init_backend()
+
+if data_source == "real":
+    st.success("📡 Running on **real data** from FRED + Yahoo Finance (data/raw/)")
+else:
+    st.info("🧪 Running on **synthetic data**. Run `python scripts/fetch_data.py` to fetch real data.")
 
 # ── Tabs ──
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Overview", "🔬 Simulate", "🕸️ Graph", "ℹ️ How It Works"])
