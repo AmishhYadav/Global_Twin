@@ -305,43 +305,119 @@ with tab2:
 # ═══════════════════════════════════════
 #  TAB 3: GRAPH — knowledge graph
 # ═══════════════════════════════════════
+
+# Sector colors (more distinct than country colors)
+SECTOR_COLORS = {
+    "commodity": "#f59e0b",   # amber
+    "forex":     "#06b6d4",   # cyan
+    "market":    "#3b82f6",   # blue
+    "gdp":       "#22c55e",   # green
+    "inflation": "#ef4444",   # red
+    "labor":     "#a855f7",   # purple
+    "monetary":  "#ec4899",   # pink
+    "macro":     "#6b7280",   # gray
+}
+
+# Short human-readable labels for nodes
+SHORT_LABELS = {
+    "CRUDE_OIL": "🛢️ Oil", "NATURAL_GAS": "⛽ Gas", "GOLD": "🥇 Gold",
+    "COPPER": "🔶 Copper", "WHEAT": "🌾 Wheat",
+    "SP500": "📈 S&P500", "VIX": "😱 VIX", "SEMICONDUCTOR_IDX": "💾 Chips",
+    "BALTIC_DRY_INDEX": "🚢 Shipping",
+    "EUR_USD": "💶 EUR", "CNY_USD": "💴 CNY", "INR_USD": "₹ INR", "JPY_USD": "💴 JPY",
+    "US_GDP_GROWTH": "🇺🇸 GDP", "EU_GDP_GROWTH": "🇪🇺 GDP",
+    "CN_GDP_GROWTH": "🇨🇳 GDP", "IN_GDP_GROWTH": "🇮🇳 GDP", "JP_GDP_GROWTH": "🇯🇵 GDP",
+    "US_CPI_INFLATION": "🇺🇸 CPI", "EU_CPI_INFLATION": "🇪🇺 CPI",
+    "CN_CPI_INFLATION": "🇨🇳 CPI", "IN_CPI_INFLATION": "🇮🇳 CPI", "JP_CPI_INFLATION": "🇯🇵 CPI",
+    "US_UNEMPLOYMENT": "🇺🇸 Jobs", "EU_UNEMPLOYMENT": "🇪🇺 Jobs", "JP_UNEMPLOYMENT": "🇯🇵 Jobs",
+    "US_FED_RATE": "🏦 Fed Rate", "EU_ECB_RATE": "🏦 ECB Rate", "JP_BOJ_RATE": "🏦 BOJ Rate",
+    "US_TRADE_BALANCE": "🇺🇸 Trade", "US_CONSUMER_CONFIDENCE": "🇺🇸 Confidence",
+    "US_MANUFACTURING_PMI": "🇺🇸 PMI",
+}
+
 with tab3:
-    st.header("🕸️ Causal Graph")
-    st.caption("This graph shows which economic variables influence each other. "
-               "Arrows mean 'A affects B'. Color = country, thickness = strength.")
+    st.header("🕸️ How Variables Connect")
+    st.markdown("""
+    Each **bubble** is an economic variable. **Arrows** show "A influences B".
+    - **Bubble color** = category (commodity, forex, market, etc.)  
+    - **Bigger bubbles** = variables the ML actively predicts
+    - **Hover** over any bubble or arrow for details
+    """)
 
     summary = get_graph_summary(graph)
     c1, c2, c3 = st.columns(3)
-    c1.metric("Variables (nodes)", summary['total_nodes'])
-    c2.metric("Connections (edges)", summary['total_edges'])
+    c1.metric("Variables", summary['total_nodes'])
+    c2.metric("Connections", summary['total_edges'])
     c3.metric("Cross-border links", summary['cross_border_edges'])
 
-    # Build graph
-    net = Network(height="450px", width="100%", bgcolor="#0e1117", font_color="#e2e8f0", directed=True)
-    net.force_atlas_2based()
+    # Build pyvis graph
+    net = Network(height="550px", width="100%", bgcolor="#0e1117", font_color="#e2e8f0", directed=True)
+    net.force_atlas_2based(gravity=-80, central_gravity=0.01, spring_length=120)
 
-    colors = {"US": "#3b82f6", "EU": "#8b5cf6", "CN": "#ef4444",
-              "IN": "#f97316", "JP": "#14b8a6", "GLOBAL": "#6b7280"}
+    ml_targets = set(models.keys())
 
     for node in graph.nodes():
-        country = graph.nodes[node].get('country', 'GLOBAL')
         sector = graph.nodes[node].get('sector', 'macro')
-        net.add_node(node, label=node, color=colors.get(country, "#6b7280"),
-            title=f"{node}\nCountry: {country}\nSector: {sector}", size=18)
+        country = graph.nodes[node].get('country', 'GLOBAL')
+        color = SECTOR_COLORS.get(sector, "#6b7280")
+        label = SHORT_LABELS.get(node, node)
+        is_target = node in ml_targets
+        size = 28 if is_target else 16
+
+        from src.xai.explainer import VAR_DESCRIPTIONS
+        full_name = VAR_DESCRIPTIONS.get(node, node)
+
+        tooltip = f"<b>{full_name}</b><br>Code: {node}<br>Sector: {sector}<br>Country: {country}"
+        if is_target:
+            tooltip += "<br><b>⭐ ML predicted target</b>"
+
+        net.add_node(node, label=label, color=color, size=size,
+            title=tooltip, borderWidth=3 if is_target else 1,
+            borderWidthSelected=5,
+            font={"size": 14 if is_target else 10, "color": "#e2e8f0"})
 
     for u, v, d in graph.edges(data=True):
         etype = d.get('edge_type', 'ml')
         w = d.get('weight', 0.1)
-        color = "#ef4444" if etype == "structural" else "#3b82f6" if etype == "hybrid" else "#4a4a6a"
-        net.add_edge(u, v, value=w, title=f"{w:.3f} ({etype})", color=color)
+        # Edge styling
+        if etype == "structural":
+            color = "#ef4444"
+            width = 2.5
+            dash = False
+        elif etype == "hybrid":
+            color = "#8b5cf6"
+            width = 2
+            dash = False
+        else:
+            color = "#374151"
+            width = 1
+            dash = True
+
+        # Get relationship explanation
+        from src.xai.explainer import RELATIONSHIP_EXPLANATIONS
+        explanation = RELATIONSHIP_EXPLANATIONS.get((u, v), RELATIONSHIP_EXPLANATIONS.get((v, u), ""))
+        tip = f"<b>{SHORT_LABELS.get(u, u)} → {SHORT_LABELS.get(v, v)}</b><br>Type: {etype}<br>Strength: {w:.3f}"
+        if explanation:
+            tip += f"<br><br><i>{explanation}</i>"
+
+        net.add_edge(u, v, value=w * 3, title=tip, color=color,
+            width=width, dashes=dash)
 
     html_path = "/tmp/gt_graph.html"
     net.save_graph(html_path)
     with open(html_path, 'r') as f:
-        components.html(f.read(), height=470)
+        components.html(f.read(), height=570)
 
-    st.markdown("🔵 US  🟣 EU  🔴 China  🟠 India  🟢 Japan  ⚫ Global")
-    st.caption("Red edges = known economic relationships (textbook). Blue = discovered by ML. Dark = ML-only.")
+    # Visual legend
+    st.markdown("#### Legend")
+    legend_cols = st.columns(len(SECTOR_COLORS))
+    for i, (sector, color) in enumerate(SECTOR_COLORS.items()):
+        legend_cols[i].markdown(f'<span style="color:{color}">●</span> {sector.title()}', unsafe_allow_html=True)
+
+    st.caption("**Solid red arrows** = known economic relationships  ·  "
+               "**Purple** = hybrid (ML + textbook)  ·  "
+               "**Dashed gray** = ML-discovered  ·  "
+               "**Big bubbles** = ML prediction targets")
 
 
 # ═══════════════════════════════════════
